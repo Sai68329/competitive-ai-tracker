@@ -3,33 +3,34 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-app.use(cors());
+
+const app = express();
+
+// CORS Configuration
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://frontend-eta-snowy-37.vercel.app"
+  ],
+  credentials: true
+}));
+
+app.use(express.json());
+
+// Routes
 const statusRoutes = require("./routes/statusRoutes");
 const checkRoutes = require("./routes/checkRoutes");
 const competitorRoutes = require("./routes/competitorRoutes");
 
-const app = express();
+app.use("/api", statusRoutes);
+app.use("/api", checkRoutes);
+app.use("/api/competitors", competitorRoutes);
 
-// CORS
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true,
-  })
-);
-
-app.use(express.json());
-
-// MongoDB
+// MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("Mongo Error:", err.message));
-
-// Routes
-app.use("/api", statusRoutes);
-app.use("/api", checkRoutes);
-app.use("/api/competitors", competitorRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
