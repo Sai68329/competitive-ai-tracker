@@ -22,8 +22,8 @@ const statusRoutes = require("./routes/statusRoutes");
 const checkRoutes = require("./routes/checkRoutes");
 const competitorRoutes = require("./routes/competitorRoutes");
 
-app.use("/api", statusRoutes);
-app.use("/api", checkRoutes);
+app.use("/api/status", statusRoutes);
+app.use("/api/check", checkRoutes);
 app.use("/api/competitors", competitorRoutes);
 
 // MongoDB Connection

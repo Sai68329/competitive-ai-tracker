@@ -1,41 +1,54 @@
-const express = require("express");
+// const express = require("express");
 const mongoose = require("mongoose");
 const { analyzeUrl } = require("../services/llmService");
-const PageCheck = require("../models/pagecheck");
+// const PageCheck = require("../models/pagecheck");
 
+// const router = express.Router();
+
+
+const express = require("express");
 const router = express.Router();
 
-router.post("/check", async (req, res) => {
-  try {
-    const { url, competitorId } = req.body;
+const Competitor = require("../models/competitor");
+const PageCheck = require("../models/pagecheck");
 
-    if (!url || url.trim() === "") {
-      return res.status(400).json({ error: "URL cannot be empty" });
+const { fetchPageContent } = require("../services/scraperService");
+const { generateHash, generateDiff, calculateImpact } = require("../services/diffService");
+const { generateSummary } = require("../services/aiService");
+
+router.post("/:id", async (req, res) => {
+  try {
+    const competitor = await Competitor.findById(req.params.id);
+
+    if (!competitor) {
+      return res.status(404).json({ error: "Competitor not found" });
     }
 
-    const result = await analyzeUrl(url);
+    for (let page of competitor.pages) {
+      const content = await fetchPageContent(page.url);
+      const hash = generateHash(content);
 
-    const saved = await PageCheck.create({
-      competitorId,
-      url,
-      result,
-    });
+      const summary = await analyzeUrl(page.url);
 
-    res.json(saved);
+      await PageCheck.create({
+        competitorId: competitor._id,
+        pageType: page.type,
+        contentHash: hash,
+        rawContent: content,
+        summary,
+        impactScore: 5,
+      });
+    }
+
+    res.json({ message: "Check completed successfully" });
+
   } catch (error) {
     console.error("CHECK ERROR:", error.message);
-
-    if (error.message === "LLM_FAILED") {
-      return res
-        .status(503)
-        .json({ error: "LLM service temporarily unavailable" });
-    }
-
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: error.message });
   }
 });
 
-router.get("/check/history/:id", async (req, res) => {
+router.get("/history/:id", async (req, res) => {
   try {
     const { id } = req.params;
 

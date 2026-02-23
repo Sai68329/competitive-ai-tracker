@@ -4,7 +4,7 @@ const { testLLMConnection } = require("../services/llmService");
 
 const router = express.Router();
 
-router.get("/status", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const dbStatus =
       mongoose.connection.readyState === 1
